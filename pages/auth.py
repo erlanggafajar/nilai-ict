@@ -9,12 +9,13 @@ st.set_page_config(page_title="Auth - Sistem Nilai ICT")
 # ================== DATABASE ==================
 def get_connection():
     return psycopg2.connect(
-        host=st.secrets["DB_HOST"],
+        hostaddr=st.secrets["DB_HOST"],  # ⬅️ PENTING
         port=st.secrets["DB_PORT"],
-        database=st.secrets["DB_NAME"],
+        dbname=st.secrets["DB_NAME"],
         user=st.secrets["DB_USER"],
         password=st.secrets["DB_PASSWORD"],
         sslmode="require",
+        connect_timeout=10,
     )
 
 
