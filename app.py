@@ -153,19 +153,20 @@ st.dataframe(df, use_container_width=True)
 st.divider()
 st.subheader("📤 Ekspor Data")
 
-if not df.empty:
-    if st.button("⬇️ Download PDF"):
-        pdf_path = export_pdf(df)
+if st.button("⬇️ Download PDF"):
+    df_pdf = prepare_pdf_df(df)
+    pdf_path = export_pdf(df_pdf)
 
-        with open(pdf_path, "rb") as f:
-            st.download_button(
-                label="📄 Unduh Rekap Nilai (PDF)",
-                data=f,
-                file_name="rekap_nilai_ict.pdf",
-                mime="application/pdf",
-            )
+    with open(pdf_path, "rb") as f:
+        st.download_button(
+            label="📄 Unduh Rekap Nilai (PDF)",
+            data=f,
+            file_name="rekap_nilai_ict.pdf",
+            mime="application/pdf",
+        )
 
-        os.remove(pdf_path)
+    os.remove(pdf_path)
+
 else:
     st.info("Belum ada data untuk diekspor")
 
