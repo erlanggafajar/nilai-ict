@@ -1,6 +1,45 @@
 import streamlit as st
 import pandas as pd
 from db import get_connection
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+import tempfile
+import os
+
+
+def export_pdf(df):
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    doc = SimpleDocTemplate(tmp_file.name, pagesize=A4)
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    title = Paragraph("<b>Rekap Nilai Siswa ICT</b>", styles["Title"])
+    elements.append(title)
+
+    elements.append(Paragraph(" ", styles["Normal"]))
+
+    table_data = [df.columns.tolist()] + df.values.tolist()
+
+    table = Table(table_data, repeatRows=1)
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+                ("FONT", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ]
+        )
+    )
+
+    elements.append(table)
+    doc.build(elements)
+
+    return tmp_file.name
+
 
 st.set_page_config(
     page_title="Rekap Nilai ICT", layout="wide", initial_sidebar_state="collapsed"
@@ -110,6 +149,26 @@ st.divider()
 df = load_data()
 st.subheader("📄 Data Nilai")
 st.dataframe(df, use_container_width=True)
+
+st.divider()
+st.subheader("📤 Ekspor Data")
+
+if not df.empty:
+    if st.button("⬇️ Download PDF"):
+        pdf_path = export_pdf(df)
+
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                label="📄 Unduh Rekap Nilai (PDF)",
+                data=f,
+                file_name="rekap_nilai_ict.pdf",
+                mime="application/pdf",
+            )
+
+        os.remove(pdf_path)
+else:
+    st.info("Belum ada data untuk diekspor")
+
 
 # ---------- UPDATE & DELETE ----------
 if role == "admin" and not df.empty:
