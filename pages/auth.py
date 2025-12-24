@@ -8,31 +8,15 @@ st.set_page_config(page_title="Auth - Sistem Nilai ICT")
 # ================== DATABASE ==================
 def get_connection():
     try:
-        # Debug: Show which credentials are being used
-        st.sidebar.write("Database Connection Info:")
-        st.sidebar.json({
-            "host": st.secrets["MYSQL_HOST"],
-            "port": st.secrets["MYSQL_PORT"],
-            "user": st.secrets["MYSQL_USER"],
-            "database": st.secrets["MYSQL_DB"]
-        }, expanded=False)
-        
-        conn = mysql.connector.connect(
+        return mysql.connector.connect(
             host=st.secrets["MYSQL_HOST"],
             user=st.secrets["MYSQL_USER"],
             password=st.secrets["MYSQL_PASSWORD"],
             database=st.secrets["MYSQL_DB"],
-            port=int(st.secrets["MYSQL_PORT"]),
+            port=st.secrets["MYSQL_PORT"],
         )
-        return conn
-    except KeyError as e:
-        st.error(f"❌ Konfigurasi database tidak lengkap: {str(e)}")
-        st.stop()
-    except mysql.connector.Error as err:
-        st.error(f"❌ Gagal terhubung ke database: {err}")
-        st.error(f"Menggunakan user: {st.secrets.get('MYSQL_USER', 'tidak ada')}")
-        st.error(f"Host: {st.secrets.get('MYSQL_HOST', 'tidak ada')}")
-        st.error(f"Database: {st.secrets.get('MYSQL_DB', 'tidak ada')}")
+    except KeyError:
+        st.error("❌ Database secrets belum dikonfigurasi")
         st.stop()
 
 
