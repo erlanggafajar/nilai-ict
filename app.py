@@ -121,7 +121,7 @@ with st.sidebar:
 header_col1, header_col2 = st.columns([3, 1])
 with header_col1:
     st.title("📊 Rekap Nilai Siswa ICT")
-    st.info("Selamat datang di panel manajemen nilai SMPIT Nurul Qolbi 2025.")
+    st.info("Selamat datang di panel rekap nilai pelatihan SMPIT Nurul Qolbi 2025.")
 
 # --- METRIC SUMMARY ---
 df = load_data()
@@ -195,11 +195,11 @@ with tab3:
         else:
             st.info("Tidak ada data untuk diekspor.")
 
+    # Bagian kanan hanya dirender jika user adalah admin
     with col_right:
         if role == "admin" and not df.empty:
             st.subheader("Edit atau Hapus Data")
             with st.expander("Buka Panel Edit"):
-                # Menghilangkan teks "ID: x" pada selectbox, hanya menampilkan Nama Siswa
                 selected_id = st.selectbox(
                     "Pilih Siswa untuk dikelola",
                     df["id"],
@@ -228,10 +228,6 @@ with tab3:
                     delete_data(selected_id)
                     st.warning("Data telah dihapus.")
                     st.rerun()
-        elif role != "admin":
-            st.subheader("Pengaturan")
-            st.info("Anda login sebagai User (View Only).")
-
 # --- FOOTER ---
 st.divider()
 st.caption("© 2025 Tim Jago Komputer Kresna")
