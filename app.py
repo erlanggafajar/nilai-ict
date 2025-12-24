@@ -110,7 +110,8 @@ def delete_data(id_):
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3426/3426653.png", width=100)
     st.title("Menu Utama")
-    st.write(f"Logged in as: **{st.session_state.username}**")
+    st.write(f"Masuk Dengan: **{st.session_state.username}**")
+    st.caption(f"Hak Akses: {role.upper()}")
     st.divider()
     if st.button("🚪 Logout", use_container_width=True):
         st.session_state.clear()
