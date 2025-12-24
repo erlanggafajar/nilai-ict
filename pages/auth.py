@@ -2,14 +2,20 @@ import streamlit as st
 import hashlib
 import psycopg2
 import bcrypt
+import socket
 
 st.set_page_config(page_title="Auth - Sistem Nilai ICT")
 
 
 # ================== DATABASE ==================
 def get_connection():
+    host = st.secrets["DB_HOST"]
+
+    ip = socket.gethostbyname(host)
+
     return psycopg2.connect(
-        hostaddr=st.secrets["DB_HOST"],
+        hostaddr=ip,
+        host=host,
         port=st.secrets["DB_PORT"],
         dbname=st.secrets["DB_NAME"],
         user=st.secrets["DB_USER"],
