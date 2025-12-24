@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import mysql.connector
+import psycopg2
 
 st.set_page_config(page_title="Sistem Nilai ICT", layout="wide")
 
@@ -17,24 +17,27 @@ if not st.session_state.login:
     st.stop()
 
 
-# ===== DATABASE =====
+# ===== DATABASE (POSTGRESQL - SUPABASE POOLER) =====
 def get_connection():
-    return mysql.connector.connect(
-        host=st.secrets["MYSQL_HOST"],
-        user=st.secrets["MYSQL_USER"],
-        password=st.secrets["MYSQL_PASSWORD"],
-        database=st.secrets["MYSQL_DB"],
-        port=st.secrets["MYSQL_PORT"],
+    return psycopg2.connect(
+        host=st.secrets["DB_HOST"],
+        port=st.secrets["DB_PORT"],
+        dbname=st.secrets["DB_NAME"],
+        user=st.secrets["DB_USER"],
+        password=st.secrets["DB_PASSWORD"],
+        sslmode="require",
+        connect_timeout=10,
     )
 
 
 def load_nilai():
     conn = get_connection()
-    df = pd.read_sql("SELECT * FROM nilai_siswa", conn)
+    df = pd.read_sql("SELECT * FROM nilai_siswa ORDER BY nama_siswa", conn)
     conn.close()
     return df
 
 
+# ===== UI =====
 st.title("📚 Sistem Nilai ICT")
 st.write(f"👤 {st.session_state.username} ({st.session_state.role})")
 
