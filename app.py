@@ -9,6 +9,17 @@ import tempfile
 import os
 
 
+# ================= PDF HELPERS =================
+def prepare_pdf_df(df):
+    df_pdf = df.copy()
+
+    if "id" in df_pdf.columns:
+        df_pdf = df_pdf.drop(columns=["id"])
+
+    df_pdf.insert(0, "No", range(1, len(df_pdf) + 1))
+    return df_pdf
+
+
 def export_pdf(df):
     tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     doc = SimpleDocTemplate(tmp_file.name, pagesize=A4)
@@ -16,14 +27,12 @@ def export_pdf(df):
     styles = getSampleStyleSheet()
     elements = []
 
-    title = Paragraph("<b>Rekap Nilai Siswa ICT</b>", styles["Title"])
-    elements.append(title)
-
+    elements.append(Paragraph("<b>Rekap Nilai Siswa ICT</b>", styles["Title"]))
     elements.append(Paragraph(" ", styles["Normal"]))
 
     table_data = [df.columns.tolist()] + df.values.tolist()
-
     table = Table(table_data, repeatRows=1)
+
     table.setStyle(
         TableStyle(
             [
@@ -41,8 +50,11 @@ def export_pdf(df):
     return tmp_file.name
 
 
+# ================= PAGE CONFIG =================
 st.set_page_config(
-    page_title="Rekap Nilai ICT", layout="wide", initial_sidebar_state="collapsed"
+    page_title="Rekap Nilai ICT",
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
 # ================= SESSION GUARD =================
@@ -53,7 +65,7 @@ if not st.session_state.get("login"):
 role = st.session_state.get("role")
 
 
-# ================= DB FUNCTIONS =================
+# ================= DATABASE =================
 def load_data():
     conn = get_connection()
     df = pd.read_sql("select * from nilai_siswa order by id desc", conn)
@@ -67,9 +79,9 @@ def hitung_nilai_akhir(p):
 
 def insert_data(nama, p):
     nilai_akhir = hitung_nilai_akhir(p)
-
     conn = get_connection()
     cur = conn.cursor()
+
     cur.execute(
         """
         insert into nilai_siswa
@@ -78,6 +90,7 @@ def insert_data(nama, p):
         """,
         (nama, *p, nilai_akhir),
     )
+
     conn.commit()
     cur.close()
     conn.close()
@@ -85,9 +98,9 @@ def insert_data(nama, p):
 
 def update_data(id_, p):
     nilai_akhir = hitung_nilai_akhir(p)
-
     conn = get_connection()
     cur = conn.cursor()
+
     cur.execute(
         """
         update nilai_siswa set
@@ -97,6 +110,7 @@ def update_data(id_, p):
         """,
         (*p, nilai_akhir, id_),
     )
+
     conn.commit()
     cur.close()
     conn.close()
@@ -123,19 +137,9 @@ if role == "admin":
         nama = st.text_input("Nama Siswa")
 
         cols = st.columns(7)
-        p = [
-            cols[0].number_input("P1", 0, 100, 75),
-            cols[1].number_input("P2", 0, 100, 75),
-            cols[2].number_input("P3", 0, 100, 75),
-            cols[3].number_input("P4", 0, 100, 75),
-            cols[4].number_input("P5", 0, 100, 75),
-            cols[5].number_input("P6", 0, 100, 75),
-            cols[6].number_input("P7", 0, 100, 75),
-        ]
+        p = [cols[i].number_input(f"P{i+1}", 0, 100, 75) for i in range(7)]
 
-        submit = st.form_submit_button("Simpan Nilai")
-
-        if submit:
+        if st.form_submit_button("Simpan Nilai"):
             if not nama:
                 st.warning("Nama siswa wajib diisi")
             else:
@@ -148,76 +152,57 @@ st.divider()
 # ---------- READ ----------
 df = load_data()
 st.subheader("📄 Data Nilai")
-st.dataframe(df, use_container_width=True)
 
+df_view = df.drop(columns=["id"])
+df_view.insert(0, "No", range(1, len(df_view) + 1))
+st.dataframe(df_view, use_container_width=True)
+
+# ---------- EXPORT PDF ----------
 st.divider()
 st.subheader("📤 Ekspor Data")
 
-if st.button("⬇️ Download PDF"):
-    df_pdf = prepare_pdf_df(df)
-    pdf_path = export_pdf(df_pdf)
+if not df.empty:
+    if st.button("⬇️ Download PDF"):
+        df_pdf = prepare_pdf_df(df)
+        pdf_path = export_pdf(df_pdf)
 
-    with open(pdf_path, "rb") as f:
-        st.download_button(
-            label="📄 Unduh Rekap Nilai (PDF)",
-            data=f,
-            file_name="rekap_nilai_ict.pdf",
-            mime="application/pdf",
-        )
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                "📄 Unduh Rekap Nilai (PDF)",
+                data=f,
+                file_name="rekap_nilai_ict.pdf",
+                mime="application/pdf",
+            )
 
-    os.remove(pdf_path)
-
+        os.remove(pdf_path)
 else:
     st.info("Belum ada data untuk diekspor")
-
-
-def prepare_pdf_df(df):
-    df_pdf = df.copy()
-
-    # hapus kolom id
-    if "id" in df_pdf.columns:
-        df_pdf = df_pdf.drop(columns=["id"])
-
-    # tambah kolom nomor di depan
-    df_pdf.insert(0, "No", range(1, len(df_pdf) + 1))
-
-    return df_pdf
-
 
 # ---------- UPDATE & DELETE ----------
 if role == "admin" and not df.empty:
     st.subheader("✏️ Edit / Hapus Nilai")
 
     selected_id = st.selectbox("Pilih ID Siswa", df["id"])
-
     row = df[df["id"] == selected_id].iloc[0]
 
     st.write(f"👨‍🎓 **{row['nama_siswa']}**")
 
     cols = st.columns(7)
     p_edit = [
-        cols[0].number_input("P1", 0, 100, int(row["p1"])),
-        cols[1].number_input("P2", 0, 100, int(row["p2"])),
-        cols[2].number_input("P3", 0, 100, int(row["p3"])),
-        cols[3].number_input("P4", 0, 100, int(row["p4"])),
-        cols[4].number_input("P5", 0, 100, int(row["p5"])),
-        cols[5].number_input("P6", 0, 100, int(row["p6"])),
-        cols[6].number_input("P7", 0, 100, int(row["p7"])),
+        cols[i].number_input(f"P{i+1}", 0, 100, int(row[f"p{i+1}"])) for i in range(7)
     ]
 
     col1, col2 = st.columns(2)
 
-    with col1:
-        if st.button("Update"):
-            update_data(selected_id, p_edit)
-            st.success("Nilai diperbarui")
-            st.rerun()
+    if col1.button("Update"):
+        update_data(selected_id, p_edit)
+        st.success("Nilai diperbarui")
+        st.rerun()
 
-    with col2:
-        if st.button("Hapus"):
-            delete_data(selected_id)
-            st.warning("Data dihapus")
-            st.rerun()
+    if col2.button("Hapus"):
+        delete_data(selected_id)
+        st.warning("Data dihapus")
+        st.rerun()
 
 # ---------- LOGOUT ----------
 st.divider()
