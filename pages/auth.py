@@ -37,7 +37,7 @@ def login_user(username, password):
     conn.close()
 
     if row and bcrypt.checkpw(password.encode(), row[1].encode()):
-        return {"id": row[0], "role": row[2]}
+        return {"id": row[0], "username": username, "role": row[2]}  # ✅ TAMBAHKAN INI
     return None
 
 
