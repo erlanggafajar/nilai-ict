@@ -106,7 +106,7 @@ def delete_data(id_):
 
 # ================= UI LAYOUT UPDATE =================
 
-# --- SIDEBAR (Clean Design) ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3426/3426653.png", width=100)
     st.title("Menu Utama")
@@ -132,16 +132,15 @@ if not df.empty:
     m3.metric("Nilai Tertinggi", df["nilai_akhir"].max())
 
 # --- MAIN CONTENT TABS ---
-# Memisahkan Lihat Data, Input, dan Ekspor agar tidak menumpuk dalam satu halaman panjang
 tab1, tab2, tab3 = st.tabs(["📄 Lihat Data", "➕ Input Nilai", "⚙️ Kelola & Ekspor"])
 
 with tab1:
     st.subheader("Daftar Nilai Keseluruhan")
     if not df.empty:
+        # Menghapus kolom 'id' sebelum ditampilkan di dataframe
         df_view = df.drop(columns=["id"])
         df_view.insert(0, "No", range(1, len(df_view) + 1))
-        # Menggunakan Container Width dan Height agar lebih rapi
-        st.dataframe(df_view, use_container_width=True, height=400)
+        st.dataframe(df_view, use_container_width=True, height=400, hide_index=True)
     else:
         st.info("Belum ada data siswa.")
 
@@ -195,15 +194,16 @@ with tab3:
         if role == "admin" and not df.empty:
             st.subheader("Edit atau Hapus Data")
             with st.expander("Buka Panel Edit"):
+                # Menghilangkan teks "ID: x" pada selectbox, hanya menampilkan Nama Siswa
                 selected_id = st.selectbox(
-                    "Pilih Siswa berdasarkan ID",
+                    "Pilih Siswa untuk dikelola",
                     df["id"],
-                    format_func=lambda x: f"ID: {x} - {df[df['id']==x]['nama_siswa'].values[0]}",
+                    format_func=lambda x: f"{df[df['id']==x]['nama_siswa'].values[0]}",
                 )
                 row = df[df["id"] == selected_id].iloc[0]
 
                 st.write(f"Mengedit Nilai: **{row['nama_siswa']}**")
-                cols_edit = st.columns(4)  # Layout grid untuk edit
+                cols_edit = st.columns(4)
                 p_edit = []
                 for i in range(7):
                     val = cols_edit[i % 4].number_input(
