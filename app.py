@@ -170,6 +170,19 @@ else:
     st.info("Belum ada data untuk diekspor")
 
 
+def prepare_pdf_df(df):
+    df_pdf = df.copy()
+
+    # hapus kolom id
+    if "id" in df_pdf.columns:
+        df_pdf = df_pdf.drop(columns=["id"])
+
+    # tambah kolom nomor di depan
+    df_pdf.insert(0, "No", range(1, len(df_pdf) + 1))
+
+    return df_pdf
+
+
 # ---------- UPDATE & DELETE ----------
 if role == "admin" and not df.empty:
     st.subheader("✏️ Edit / Hapus Nilai")
