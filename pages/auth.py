@@ -4,7 +4,13 @@ import psycopg2
 import bcrypt
 import socket
 
-st.set_page_config(page_title="Auth - Sistem Nilai ICT")
+st.set_page_config(
+    page_title="Sistem Nilai ICT", layout="wide", initial_sidebar_state="collapsed"
+)
+
+if st.session_state.get("login"):
+    st.switch_page("app.py")
+    st.stop()
 
 
 # ================== DATABASE ==================
@@ -18,6 +24,14 @@ def get_connection():
         sslmode="require",
         connect_timeout=10,
     )
+
+
+ENABLE_REGISTER = False
+
+if ENABLE_REGISTER:
+    tab_login, tab_daftar = st.tabs(["Login", "Daftar"])
+else:
+    tab_login = st.container()
 
 
 # ================== SECURITY ==================

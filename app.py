@@ -2,7 +2,15 @@ import streamlit as st
 import pandas as pd
 import psycopg2
 
-st.set_page_config(page_title="Sistem Nilai ICT", layout="wide")
+from auth_guard import require_login
+
+require_login()
+
+st.set_page_config(
+    page_title="Login Sistem Nilai ICT",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 
 # ===== SESSION =====
 if "login" not in st.session_state:
@@ -11,9 +19,8 @@ if "login" not in st.session_state:
     st.session_state.role = ""
 
 # ===== PROTEKSI =====
-if not st.session_state.login:
-    st.warning("🔒 Silakan login terlebih dahulu")
-    st.page_link("pages/auth.py", label="👉 Login ke Sistem")
+if not st.session_state.get("login"):
+    st.switch_page("pages/auth.py")
     st.stop()
 
 
