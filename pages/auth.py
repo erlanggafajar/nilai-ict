@@ -1,23 +1,21 @@
 import streamlit as st
 import hashlib
-import mysql.connector
+import psycopg2
+import bcrypt
 
 st.set_page_config(page_title="Auth - Sistem Nilai ICT")
 
 
 # ================== DATABASE ==================
 def get_connection():
-    try:
-        return mysql.connector.connect(
-            host=st.secrets["MYSQL_HOST"],
-            user=st.secrets["MYSQL_USER"],
-            password=st.secrets["MYSQL_PASSWORD"],
-            database=st.secrets["MYSQL_DB"],
-            port=st.secrets["MYSQL_PORT"],
-        )
-    except KeyError:
-        st.error("❌ Database secrets belum dikonfigurasi")
-        st.stop()
+    return psycopg2.connect(
+        host=st.secrets["DB_HOST"],
+        port=st.secrets["DB_PORT"],
+        database=st.secrets["DB_NAME"],
+        user=st.secrets["DB_USER"],
+        password=st.secrets["DB_PASSWORD"],
+        sslmode="require",
+    )
 
 
 # ================== SECURITY ==================
@@ -28,34 +26,37 @@ def hash_password(password):
 # ================== AUTH FUNCTIONS ==================
 def login_user(username, password):
     conn = get_connection()
-    cur = conn.cursor(dictionary=True)
-    cur.execute(
-        "SELECT username, role FROM users WHERE username=%s AND password=%s",
-        (username, hash_password(password)),
-    )
-    user = cur.fetchone()
+    cur = conn.cursor()
+
+    cur.execute("select id, password, role from users where username=%s", (username,))
+    row = cur.fetchone()
+
+    cur.close()
     conn.close()
-    return user
+
+    if row and bcrypt.checkpw(password.encode(), row[1].encode()):
+        return {"id": row[0], "role": row[2]}
+    return None
 
 
 def register_user(username, password):
     conn = get_connection()
     cur = conn.cursor()
 
-    # cek username sudah ada
-    cur.execute("SELECT id FROM users WHERE username=%s", (username,))
-    if cur.fetchone():
-        conn.close()
-        return False, "Username sudah terdaftar"
+    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-    # role otomatis viewer
-    cur.execute(
-        "INSERT INTO users (username, password, role) VALUES (%s, %s, 'viewer')",
-        (username, hash_password(password)),
-    )
-    conn.commit()
-    conn.close()
-    return True, "Akun berhasil dibuat (role: viewer)"
+    try:
+        cur.execute(
+            "insert into users (username, password, role) values (%s, %s, 'viewer')",
+            (username, hashed),
+        )
+        conn.commit()
+        return True, "Registrasi berhasil (role: viewer)"
+    except:
+        return False, "Username sudah digunakan"
+    finally:
+        cur.close()
+        conn.close()
 
 
 # ================== UI ==================
