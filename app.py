@@ -132,20 +132,27 @@ if not df.empty:
     m3.metric("Nilai Tertinggi", df["nilai_akhir"].max())
 
 # --- MAIN CONTENT TABS ---
-tab1, tab2, tab3 = st.tabs(["📄 Lihat Data", "➕ Input Nilai", "⚙️ Kelola & Ekspor"])
+if role == "admin":
+    # Admin melihat semua tab (termasuk Input Nilai)
+    tab1, tab2, tab3 = st.tabs(["📄 Lihat Data", "➕ Input Nilai", "⚙️ Kelola & Ekspor"])
+else:
+    # Viewer hanya melihat tab Lihat Data dan Ekspor (Input Nilai dihilangkan)
+    tab1, tab3 = st.tabs(["📄 Lihat Data", "⚙️ Ekspor"])
+    # tab2 diinisialisasi sebagai None agar tidak error, tapi tidak akan dirender
+    tab2 = None
 
 with tab1:
     st.subheader("Daftar Nilai Keseluruhan")
     if not df.empty:
-        # Menghapus kolom 'id' sebelum ditampilkan di dataframe
         df_view = df.drop(columns=["id"])
         df_view.insert(0, "No", range(1, len(df_view) + 1))
         st.dataframe(df_view, use_container_width=True, height=400, hide_index=True)
     else:
         st.info("Belum ada data siswa.")
 
-with tab2:
-    if role == "admin":
+# Render tab2 (Input Nilai) hanya jika user adalah admin
+if tab2:
+    with tab2:
         st.subheader("Tambah Data Siswa Baru")
         with st.container(border=True):
             with st.form("form_input", clear_on_submit=True):
@@ -166,8 +173,6 @@ with tab2:
                         insert_data(nama, p)
                         st.success(f"Berhasil menyimpan data {nama}")
                         st.rerun()
-    else:
-        st.warning("Hanya akun Admin yang dapat menambah data.")
 
 with tab3:
     col_left, col_right = st.columns(2)
