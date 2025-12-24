@@ -47,13 +47,19 @@ def register_user(username, password):
 
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
+    # cek jumlah user
+    cur.execute("select count(*) from users")
+    total = cur.fetchone()[0]
+
+    role = "admin" if total == 0 else "viewer"
+
     try:
         cur.execute(
-            "insert into users (username, password, role) values (%s, %s, 'viewer')",
-            (username, hashed),
+            "insert into users (username, password, role) values (%s, %s, %s)",
+            (username, hashed, role),
         )
         conn.commit()
-        return True, "Registrasi berhasil (role: viewer)"
+        return True, f"Registrasi berhasil (role: {role})"
     except:
         return False, "Username sudah digunakan"
     finally:
