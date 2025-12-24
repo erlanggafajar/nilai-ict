@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import psycopg2
+from db import get_connection
 
 from auth_guard import require_login
 
@@ -22,19 +22,6 @@ if "login" not in st.session_state:
 if not st.session_state.get("login"):
     st.switch_page("pages/auth.py")
     st.stop()
-
-
-# ===== DATABASE (POSTGRESQL - SUPABASE POOLER) =====
-def get_connection():
-    return psycopg2.connect(
-        host=st.secrets["DB_HOST"],
-        port=st.secrets["DB_PORT"],
-        dbname=st.secrets["DB_NAME"],
-        user=st.secrets["DB_USER"],
-        password=st.secrets["DB_PASSWORD"],
-        sslmode="require",
-        connect_timeout=10,
-    )
 
 
 def load_nilai():

@@ -1,8 +1,9 @@
 import streamlit as st
 import hashlib
-import psycopg2
 import bcrypt
 import socket
+
+from db import get_connection
 
 st.set_page_config(
     page_title="Sistem Nilai ICT", layout="wide", initial_sidebar_state="collapsed"
@@ -11,20 +12,6 @@ st.set_page_config(
 if st.session_state.get("login"):
     st.switch_page("app.py")
     st.stop()
-
-
-# ================== DATABASE ==================
-def get_connection():
-    return psycopg2.connect(
-        host=st.secrets["DB_HOST"],
-        port=st.secrets["DB_PORT"],
-        dbname=st.secrets["DB_NAME"],
-        user=st.secrets["DB_USER"],
-        password=st.secrets["DB_PASSWORD"],
-        sslmode="require",
-        connect_timeout=10,
-    )
-
 
 ENABLE_REGISTER = False
 
